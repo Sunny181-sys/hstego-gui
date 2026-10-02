@@ -3,5 +3,4 @@ imageio
 numpy<2.0.0
 scipy
 pycryptodome
-numba
 Pillow
