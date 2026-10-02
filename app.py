@@ -4,23 +4,24 @@ import io
 
 st.set_page_config(page_title="图像隐写工具", page_icon="🔐")
 st.title("🔐 图像隐写工具（纯Python LSB版）")
-st.caption("无需编译，云端直接运行，支持PNG格式")
+st.caption("无需编译，云端直接运行，支持PNG格式与中文加密")
 
 def embed_msg(img, msg):
-    # 将文字转为二进制
-    bin_data = ''.join(format(ord(c), '08b') for c in msg)
-    # 用16位记录长度
+    # 【核心修复】：将文字转为 UTF-8 字节，再转二进制，解决中文乱码！
+    msg_bytes = msg.encode('utf-8')
+    bin_data = ''.join(format(b, '08b') for b in msg_bytes)
+    
     length_bin = format(len(bin_data), '016b')
     full_bin = length_bin + bin_data
     
     pixels = list(img.getdata())
     if len(full_bin) > len(pixels) * 3:
-        return None  # 容量超限
+        return None
     
     new_pixels = []
     for i in range(len(full_bin)):
         r, g, b = pixels[i]
-        r = (r & ~1) | int(full_bin[i]) # 修改R通道最低位
+        r = (r & ~1) | int(full_bin[i])
         new_pixels.append((r, g, b))
     new_pixels.extend(pixels[len(full_bin):])
     
@@ -37,7 +38,12 @@ def extract_msg(img):
         return ""
         
     msg_bin = bin_data[16:16+length]
-    return ''.join(chr(int(msg_bin[i:i+8], 2)) for i in range(0, len(msg_bin), 8))
+    # 【核心修复】：将 8 位二进制转回字节，再用 UTF-8 解码出中文
+    byte_list = [int(msg_bin[i:i+8], 2) for i in range(0, len(msg_bin), 8)]
+    try:
+        return bytes(byte_list).decode('utf-8')
+    except:
+        return "解码失败，可能密码错误或图片被破坏"
 
 tab1, tab2 = st.tabs(["📥 嵌入信息", "📤 提取信息"])
 
