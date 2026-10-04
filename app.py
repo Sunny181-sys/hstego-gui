@@ -63,11 +63,9 @@ with tab1:
                 
                 try:
                     if HAS_HSTEGO:
-                        # 优先调用老师的 HStego 基座
                         algo = hstegolib.S_UNIWARD()
                         algo.embed(cover_path, secret, pwd, stego_path)
                     else:
-                        # 容灾降级：调用纯 Python LSB
                         img = Image.open(cover_path).convert('RGB')
                         stego_img = embed_lsb(img, secret)
                         stego_img.save(stego_path, format='PNG')
